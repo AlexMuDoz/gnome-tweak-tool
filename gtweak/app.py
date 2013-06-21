@@ -23,16 +23,17 @@ from gi.repository import Gio
 import gtweak 
 from gtweak.tweakmodel import TweakModel
 from gtweak.tweakview import TweakView
+from gtweak.utils import SchemaList
         
 class GnomeTweakTool(Gtk.Application):
 	def __init__(self):
 	    Gtk.Application.__init__(self)
 	
 	def do_activate(self):                                           
-                win = self.builder.get_object('main_window')
-                win.set_position(Gtk.WindowPosition.CENTER)
-                win.set_application(self)
-                win.set_size_request(720, 580)
+                self.win = self.builder.get_object('main_window')
+                self.win.set_position(Gtk.WindowPosition.CENTER)
+                self.win.set_application(self)
+                self.win.set_size_request(720, 580)
                 toolbar = self.builder.get_object('toolbar')
 		toolbar.get_style_context().add_class(Gtk.STYLE_CLASS_PRIMARY_TOOLBAR)
         
@@ -42,7 +43,7 @@ class GnomeTweakTool(Gtk.Application):
 			model)
 		self.builder.get_object('overview_sw').add(view.treeview)
 		
-		win.show_all()
+		self.win.show_all()
 		view.run()
         
 	def do_startup(self):
@@ -74,8 +75,16 @@ class GnomeTweakTool(Gtk.Application):
 
 
 	def reset_cb(self, action, parameter):
-		print "This does nothing. It is only a demonstration."
-	
+		dialog = Gtk.MessageDialog(self.win,0, Gtk.MessageType.QUESTION,
+				    Gtk.ButtonsType.OK_CANCEL, "Reset to Defaults")
+		dialog.format_secondary_text("Reset all tweak settings to the original default state?")
+		response = dialog.run()
+		if response == Gtk.ResponseType.OK:
+			s = SchemaList() 
+			s.reset()
+		dialog.destroy()
+			
+			
 	def help_cb(self, action, parameter):
 		print "This does nothing. It is only a demonstration."
 
