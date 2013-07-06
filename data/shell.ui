@@ -6,6 +6,10 @@
       <item>
 	<attribute name='label' translatable='yes'>_Reset to Defaults</attribute>
 	<attribute name='action'>app.reset</attribute>
+      </item>
+      <item>
+	<attribute name='label' translatable='yes'>Disable All Shell Extensions</attribute>
+	<attribute name='action'>app.disable_extension</attribute>
       </item>	      
    </section>
    <section>

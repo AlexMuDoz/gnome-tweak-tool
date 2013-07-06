@@ -24,6 +24,7 @@ import gtweak
 from gtweak.tweakmodel import TweakModel
 from gtweak.tweakview import TweakView
 from gtweak.utils import SchemaList
+from gtweak.utils import DisableExtension
         
 class GnomeTweakTool(Gtk.Application):
 	def __init__(self):
@@ -61,6 +62,10 @@ class GnomeTweakTool(Gtk.Application):
 		reset_action.connect("activate", self.reset_cb)
 		self.add_action(reset_action)		
 
+		disable_extension_action = Gio.SimpleAction.new("disable_extension", None)
+		disable_extension_action.connect("activate", self.disable_cb)
+		self.add_action(disable_extension_action)
+
 		help_action = Gio.SimpleAction.new("help", None)
 		help_action.connect("activate", self.help_cb)
 		self.add_action(help_action)
@@ -83,8 +88,11 @@ class GnomeTweakTool(Gtk.Application):
 			s = SchemaList() 
 			s.reset()
 		dialog.destroy()
-			
-			
+
+	def disable_cb(self, action, parameter):	
+		ds = DisableExtension()
+		ds.disable()
+
 	def help_cb(self, action, parameter):
 		print "This does nothing. It is only a demonstration."
 
