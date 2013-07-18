@@ -23,9 +23,10 @@ from gi.repository import GLib, Gtk, Gdk, Gio, Pango
 from gtweak.tweakmodel import Tweak
 from gtweak.gsettings import GSettingsSetting, GSettingsFakeSetting, GSettingsMissingError
 from gtweak.gtksettings import GtkSettingsManager
-from gtweak.gconf import GConfSetting
+from gtweak.gshellwrapper import GnomeShellFactory
 
 UI_BOX_SPACING = 4
+_shell = GnomeShellFactory().get_shell()
 
 def build_label_beside_widget(txt, *widget, **kwargs):
     """
@@ -41,6 +42,14 @@ def build_label_beside_widget(txt, *widget, **kwargs):
         image.set_tooltip_text(tip)
         return image
 
+    def show_tooltip_when_ellipsized(label, x, y, keyboard_mode, tooltip):
+        layout = label.get_layout()
+        if layout.is_ellipsized():
+            tooltip.set_text(label.get_text())
+            return True
+        else:
+            return False
+
     if kwargs.get("hbox"):
         hbox = kwargs.get("hbox")
     else:
@@ -50,6 +59,8 @@ def build_label_beside_widget(txt, *widget, **kwargs):
     lbl = Gtk.Label(txt)
     lbl.props.ellipsize = Pango.EllipsizeMode.END
     lbl.props.xalign = 0.0
+    lbl.set_has_tooltip(True)
+    lbl.connect("query-tooltip", show_tooltip_when_ellipsized)
     hbox.pack_start(lbl, True, True, 0)
 
     if kwargs.get("info"):
@@ -118,8 +129,26 @@ def build_tight_button(stock_id):
     button.get_style_context().add_provider(provider, 600) 
     return button
 
+def adjust_schema_for_overrides(originalSchema, key, options):
+    if (_shell is None):
+        return originalSchema
+
+    if (_shell.mode == 'classic'):
+        overridesSchema = "org.gnome.shell.extensions.classic-overrides"
+        overridesFile = None
+    else:
+        overridesSchema = "org.gnome.shell.overrides"
+        overridesFile = "org.gnome.shell.gschema.xml"
+
+    if (key in Gio.Settings(overridesSchema).list_keys()):
+        options['schema_filename'] = overridesFile
+        return overridesSchema
+    return originalSchema
+
+
 class _GSettingsTweak(Tweak):
     def __init__(self, schema_name, key_name, **options):
+        schema_name = adjust_schema_for_overrides(schema_name, key_name, options)
         self.schema_name = schema_name
         self.key_name = key_name
         try:
@@ -139,8 +168,39 @@ class _GSettingsTweak(Tweak):
             self.loaded = False
             logging.info("GSettings missing key %s (key %s)" % (schema_name, key_name))
 
+        if options.get("logout_required") and self.loaded:
+            self.settings.connect("changed::%s" % key_name, self._on_changed_notify_logout)
 
-class GSettingsSwitchTweak(_GSettingsTweak):
+    def _on_changed_notify_logout(self, settings, key_name):
+        self.notify_action_required(
+                "Configuration changes require restart",
+                btn="Restart Session",
+                func=None,
+                need_logout=True,
+        )
+
+class _DependableMixin:
+
+    def add_dependency_on_tweak(self, depends, depends_how):
+        if isinstance(depends, Tweak):
+            self._depends = depends
+            if depends_how is None:
+                depends_how = lambda x,kn: x.get_boolean(kn)
+            self._depends_how = depends_how
+
+            sensitive = self._depends_how(
+                                depends.settings,
+                                depends.key_name,
+            )
+            self.widget.set_sensitive(sensitive)
+
+            depends.settings.connect("changed::%s" % depends.key_name, self._on_changed_depend)
+
+    def _on_changed_depend(self, settings, key_name):
+        sensitive = self._depends_how(settings,key_name)
+        self.widget.set_sensitive(sensitive)
+
+class GSettingsSwitchTweak(_GSettingsTweak, _DependableMixin):
     def __init__(self, schema_name, key_name, **options):
         _GSettingsTweak.__init__(self, schema_name, key_name, **options)
 
@@ -150,7 +210,12 @@ class GSettingsSwitchTweak(_GSettingsTweak):
         # never change the size of a switch
         self.widget_for_size_group = None
 
-class GSettingsFontButtonTweak(_GSettingsTweak):
+        self.add_dependency_on_tweak(
+                options.get("depends_on"),
+                options.get("depends_how")
+        )
+
+class GSettingsFontButtonTweak(_GSettingsTweak, _DependableMixin):
     def __init__(self, schema_name, key_name, **options):
         _GSettingsTweak.__init__(self, schema_name, key_name, **options)
 
@@ -159,7 +224,7 @@ class GSettingsFontButtonTweak(_GSettingsTweak):
         self.widget = build_label_beside_widget(self.name, w)
         self.widget_for_size_group = w
 
-class GSettingsRangeTweak(_GSettingsTweak):
+class GSettingsRangeTweak(_GSettingsTweak, _DependableMixin):
     def __init__(self, schema_name, key_name, **options):
         _GSettingsTweak.__init__(self, schema_name, key_name, **options)
 
@@ -171,7 +236,7 @@ class GSettingsRangeTweak(_GSettingsTweak):
         self.widget = build_label_beside_widget(self.name, w)
         self.widget_for_size_group = w
 
-class GSettingsSpinButtonTweak(_GSettingsTweak):
+class GSettingsSpinButtonTweak(_GSettingsTweak, _DependableMixin):
     def __init__(self, schema_name, key_name, **options):
         _GSettingsTweak.__init__(self, schema_name, key_name, **options)
 
@@ -186,7 +251,7 @@ class GSettingsSpinButtonTweak(_GSettingsTweak):
         self.widget = build_label_beside_widget(self.name, w)
         self.widget_for_size_group = w
 
-class GSettingsComboEnumTweak(_GSettingsTweak):
+class GSettingsComboEnumTweak(_GSettingsTweak, _DependableMixin):
     def __init__(self, schema_name, key_name, **options):
         _GSettingsTweak.__init__(self, schema_name, key_name, **options)
 
@@ -222,7 +287,7 @@ class GSettingsComboEnumTweak(_GSettingsTweak):
         if self._values_are_different():
             self.settings.set_string(self.key_name, val)
 
-class GSettingsComboTweak(_GSettingsTweak):
+class GSettingsComboTweak(_GSettingsTweak, _DependableMixin):
     def __init__(self, schema_name, key_name, key_options, **options):
         _GSettingsTweak.__init__(self, schema_name, key_name, **options)
 
@@ -258,50 +323,6 @@ class GSettingsComboTweak(_GSettingsTweak):
             value = combo.get_model().get_value(_iter, 0)
             self.settings.set_string(self.key_name, value)
 
-class _GConfTweak(Tweak):
-    def __init__(self, key_name, key_type, **options):
-        self.gconf = GConfSetting(key_name, key_type)
-        Tweak.__init__(self,
-            options.get("summary",self.gconf.schema_get_summary()),
-            options.get("description",self.gconf.schema_get_description()),
-            **options)
-
-class GConfComboTweak(_GConfTweak):
-    def __init__(self, key_name, key_type, key_options, **options):
-        _GConfTweak.__init__(self, key_name, key_type, **options)
-
-        #check key_options is iterable
-        #and if supplied, check it is a list of 2-tuples
-        assert len(key_options) >= 0
-        if len(key_options):
-            assert len(key_options[0]) == 2
-
-        combo = build_combo_box_text(
-            self.gconf.get_value(),
-            *key_options)
-        combo.connect('changed', self._on_combo_changed)
-        self.widget = build_label_beside_widget(self.name, combo)
-        self.widget_for_size_group = combo
-
-    def _on_combo_changed(self, combo):
-        _iter = combo.get_active_iter()
-        if _iter:
-            value = combo.get_model().get_value(_iter, 0)
-            self.gconf.set_value(value)
-
-class GConfFontButtonTweak(_GConfTweak):
-    def __init__(self, key_name, key_type, **options):
-        _GConfTweak.__init__(self, key_name, key_type, **options)
-
-        w = Gtk.FontButton()
-        w.props.font_name = self.gconf.get_value()
-        w.connect("notify::font-name", self._on_fontbutton_changed)
-        self.widget = build_label_beside_widget(self.name, w)
-        self.widget_for_size_group = w
-
-    def _on_fontbutton_changed(self, btn, param):
-        self.gconf.set_value(btn.props.font_name)
-
 class FileChooserButton(Gtk.FileChooserButton):
     def __init__(self, title, local_only, mimetypes):
         Gtk.FileChooserButton.__init__(self, title=title)
@@ -316,7 +337,7 @@ class FileChooserButton(Gtk.FileChooserButton):
         self.set_local_only(local_only)
         self.set_action(Gtk.FileChooserAction.OPEN)
 
-class GSettingsFileChooserButtonTweak(_GSettingsTweak):
+class GSettingsFileChooserButtonTweak(_GSettingsTweak, _DependableMixin):
     def __init__(self, schema_name, key_name, local_only, mimetypes, **options):
         _GSettingsTweak.__init__(self, schema_name, key_name, **options)
 

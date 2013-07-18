@@ -23,7 +23,6 @@ import subprocess
 
 import gtweak
 from gtweak.gsettings import GSettingsSetting
-from gtweak.gconf import GConfSetting
 
 from gi.repository import GObject
 from gi.repository import GLib
@@ -158,7 +157,7 @@ class AutostartManager:
     def uses_autostart_condition(self, autostart_type=None):
         asc = self.get_autostart_condition()
         try:
-            if autostart_type:
+            if asc and autostart_type:
                 return asc.split(" ", 1)[0] == autostart_type
             else:
                 return asc != None
@@ -197,8 +196,6 @@ class AutostartManager:
                 if method == "GSettings":
                     schema, key = value.split(" ")
                     GSettingsSetting(schema).set_boolean(key, update)
-                elif method == "GNOME":
-                    GConfSetting(shema, bool).set_value(update)
                 else:
                     raise Exception("Method not supported")
             except:
