@@ -218,7 +218,7 @@ class _ShellExtensionInstallerTweak(Tweak):
 
 class ShellExtensionTweakGroup(TweakGroup):
     def __init__(self):
-        TweakGroup.__init__(self, N_("Shell Extensions"))
+        TweakGroup.__init__(self, N_("Extensions"))
 
         extension_tweaks = []
         sg = build_horizontal_sizegroup()

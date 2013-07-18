@@ -23,7 +23,7 @@ from gi.repository import Gtk, Gdk, GObject
 import gtweak.tweakmodel
 from gtweak.tweakmodel import TweakModel
 
-DEFAULT_TWEAKGROUP = gtweak.tweakmodel.TWEAK_GROUP_SHELL
+DEFAULT_TWEAKGROUP = gtweak.tweakmodel.TWEAK_GROUP_APPEARANCE
 WIDGET_SORT_ORDER = (Gtk.Switch, Gtk.SpinButton, Gtk.ComboBox, Gtk.Box, Gtk.VBox, Gtk.HBox)
 
 def _sort_tweak_widgets_by_widget_type(tweak):
@@ -44,35 +44,31 @@ class TweakView:
         self._detail_vbox = builder.get_object('detail_vbox')
 
         self.headerbar = Gtk.HeaderBar()
-        self.headerbar.set_title("Gnome Tweak Tool")
-        self.searchToggle = Gtk.ToggleButton()
-        self.searchToggle.add(Gtk.Image.new_from_stock(Gtk.STOCK_FIND, Gtk.IconSize.MENU))
+        searchToggle = Gtk.ToggleButton()
+        searchToggle.add(Gtk.Image.new_from_stock(Gtk.STOCK_FIND, Gtk.IconSize.MENU))
 
-
-        self.searchToggle.connect("toggled", self.transition)
         top = builder.get_object('topbox')
         top.pack_start(self.headerbar, True, True, 0)
         
-        self.headerbar.pack_start(self.searchToggle)
-        self.leftbox = builder.get_object('leftbox')
-        self.revealer = Gtk.Revealer();
+        self.headerbar.pack_start(searchToggle)
+        leftbox = builder.get_object('leftbox')
+        revealer = Gtk.Revealer();
 
-        self.entry = Gtk.SearchEntry()
+        entry = Gtk.SearchEntry()
         self._entry_manager = EntryManager(
-            self.entry,
+            entry,
             self._on_search,
             self._on_search_cancel)
 
-        self.revealer.add(self.entry)
-        self.leftbox.pack_start(self.revealer, False, True, 0)
-
+        revealer.add(entry)
+        leftbox.pack_start(revealer, False, True, 0)
+        searchToggle.connect("toggled", self.transition, entry, revealer)
         self._model = model
         self._model.load_tweaks()
         groups = self._model._tweak_group_names.keys()
  	groups = sorted(groups)
         listbox = self.init_listbox(groups)
-        self.leftbox.pack_start(listbox, True, True, 0)
-
+        leftbox.pack_start(listbox, True, True, 0)
 
         #make sure the tweak background is the correct color
         ctx = builder.get_object('tweak_viewport').get_style_context ()
@@ -97,7 +93,8 @@ class TweakView:
         tweakgroup = self._model.get_value(itere, self._model.COLUMN_TWEAK)
         self.show_only_tweaks(tweakgroup.tweaks)
         self._on_post_selection_change()
-
+        self.headerbar.set_title(tweakgroup.name)
+	
     def show_only_tweaks(self, tweaks):
         for t in self._model.tweaks:
             if t in tweaks:
@@ -163,7 +160,8 @@ class TweakView:
             self._on_pre_selection_change()
             tweakgroup = self._model.get_value(itere, self._model.COLUMN_TWEAK)
             self.show_only_tweaks(tweakgroup.tweaks)
-            self._on_post_selection_change()  
+            self._on_post_selection_change()
+            self.headerbar.set_title(tweakgroup.name)  
     
     def init_listbox(self, values):
         listbox = Gtk.ListBox()
@@ -177,14 +175,14 @@ class TweakView:
         listbox.connect("row-selected", self._on_selection_changed)
         return listbox          
     
-    def transition(self, btn):
-        if self.revealer.get_reveal_child():
-            self.revealer.set_reveal_child(False) 
-            self.entry.set_text("") 
+    def transition(self, btn, entry, revealer):
+        if revealer.get_reveal_child():
+            revealer.set_reveal_child(False) 
+            entry.set_text("") 
             btn.grab_focus()      
         else:
-            self.revealer.set_reveal_child(True)
-            self.entry.grab_focus()
+            revealer.set_reveal_child(True)
+            entry.grab_focus()
 
 
 class EntryManager:
