@@ -31,9 +31,10 @@ class GnomeTweakTool(Gtk.Application):
 	
 	def do_activate(self):                                           
                 self.win = self.builder.get_object('main_window')
-                self.win.set_position(Gtk.WindowPosition.CENTER)
+                self.win.set_hide_titlebar_when_maximized(True)
+		self.win.set_position(Gtk.WindowPosition.CENTER)
                 self.win.set_application(self)
-                self.win.set_size_request(720, 580)
+                self.win.set_size_request(720, 400)
         
 		model = TweakModel()
 		view = TweakView(

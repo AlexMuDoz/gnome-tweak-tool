@@ -20,7 +20,7 @@ import os.path
 
 from gi.repository import GLib, Gtk, Gdk, Gio, Pango
 
-from gtweak.tweakmodel import Tweak
+from gtweak.tweakmodel import Tweak, TWEAK_SORT_FIRST
 from gtweak.gsettings import GSettingsSetting, GSettingsFakeSetting, GSettingsMissingError
 from gtweak.gtksettings import GtkSettingsManager
 from gtweak.gconf import GConfSetting
@@ -45,12 +45,24 @@ def build_label_beside_widget(txt, *widget, **kwargs):
         hbox = kwargs.get("hbox")
     else:
         hbox = Gtk.HBox()
-
+    
     hbox.props.spacing = UI_BOX_SPACING
     lbl = Gtk.Label(txt)
     lbl.props.ellipsize = Pango.EllipsizeMode.END
     lbl.props.xalign = 0.0
-    hbox.pack_start(lbl, True, True, 0)
+    
+    if kwargs.get("desc"):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        box.pack_start(lbl, True, True, 0)
+        desc = kwargs.get("desc")
+        lbl_des = Gtk.Label()
+        lbl_des.props.xalign = 0.0
+        lbl_des.set_markup("<span size='x-small'>"+desc+"</span>")
+        box.pack_start(lbl_des, True, True,0)
+        hbox.pack_start(box, True, True,0)
+        
+    else:    
+        hbox.pack_start(lbl, True, True, 0)
 
     if kwargs.get("info"):
         hbox.pack_start(
@@ -141,22 +153,22 @@ class _GSettingsTweak(Tweak):
 
 
 class GSettingsSwitchTweak(_GSettingsTweak):
-    def __init__(self, schema_name, key_name, **options):
+    def __init__(self,name,schema_name, key_name, **options):
         _GSettingsTweak.__init__(self, schema_name, key_name, **options)
 
         w = Gtk.Switch()
         self.settings.bind(key_name, w, "active", Gio.SettingsBindFlags.DEFAULT)
-        self.widget = build_label_beside_widget(self.name, w)
+        self.widget = build_label_beside_widget(name, w)
         # never change the size of a switch
         self.widget_for_size_group = None
 
 class GSettingsFontButtonTweak(_GSettingsTweak):
-    def __init__(self, schema_name, key_name, **options):
+    def __init__(self, name, schema_name, key_name, **options):
         _GSettingsTweak.__init__(self, schema_name, key_name, **options)
 
         w = Gtk.FontButton()
         self.settings.bind(key_name, w, "font-name", Gio.SettingsBindFlags.DEFAULT)
-        self.widget = build_label_beside_widget(self.name, w)
+        self.widget = build_label_beside_widget(name, w)
         self.widget_for_size_group = w
 
 class GSettingsRangeTweak(_GSettingsTweak):
@@ -187,7 +199,7 @@ class GSettingsSpinButtonTweak(_GSettingsTweak):
         self.widget_for_size_group = w
 
 class GSettingsComboEnumTweak(_GSettingsTweak):
-    def __init__(self, schema_name, key_name, **options):
+    def __init__(self, name, schema_name, key_name, **options):
         _GSettingsTweak.__init__(self, schema_name, key_name, **options)
 
         _type, values = self.settings.get_range(key_name)
@@ -198,9 +210,8 @@ class GSettingsComboEnumTweak(_GSettingsTweak):
         w.connect('changed', self._on_combo_changed)
         self.combo = w
 
-        self.widget = build_label_beside_widget(self.name, w)
+        self.widget = build_label_beside_widget(name, w)
         self.widget_for_size_group = w
-
 
     def _values_are_different(self):
         #to stop bouncing back and forth between changed signals. I suspect there must be a nicer
@@ -223,7 +234,7 @@ class GSettingsComboEnumTweak(_GSettingsTweak):
             self.settings.set_string(self.key_name, val)
 
 class GSettingsComboTweak(_GSettingsTweak):
-    def __init__(self, schema_name, key_name, key_options, **options):
+    def __init__(self, name, schema_name, key_name, key_options, **options):
         _GSettingsTweak.__init__(self, schema_name, key_name, **options)
 
         #check key_options is iterable
@@ -236,7 +247,7 @@ class GSettingsComboTweak(_GSettingsTweak):
                     self.settings.get_string(self.key_name),
                     *key_options)
         self.combo.connect('changed', self._on_combo_changed)
-        self.widget = build_label_beside_widget(self.name, self.combo)
+        self.widget = build_label_beside_widget(name, self.combo)
         self.widget_for_size_group = self.combo
 
         self.settings.connect('changed::'+self.key_name, self._on_setting_changed)
@@ -351,8 +362,10 @@ class DarkThemeSwitcher(Tweak):
         w = Gtk.Switch()
         w.set_active(self._gtksettings.get_integer("gtk-application-prefer-dark-theme"))
 
+        title = _("Global Dark Theme")
+        description = _("Applications need to be restarted for change to take effect")
         w.connect("notify::active", self._on_switch_changed)
-        self.widget = build_label_beside_widget(self.name, w)
+        self.widget = build_label_beside_widget(title, w,desc =description)
 
     def _on_switch_changed(self, switch, param):
         active = switch.get_active()
@@ -362,3 +375,11 @@ class DarkThemeSwitcher(Tweak):
                                           active)
         except:
             self.notify_error(_("Error writing setting"))
+
+class Title(Tweak):
+    def __init__(self, name, desc, **options):
+        Tweak.__init__(self, name, desc, **options)
+        self.widget = Gtk.Label()
+        self.widget.set_markup("<b>"+name+"</b>")
+        self.widget.props.xalign = 0.0
+    
