@@ -35,14 +35,11 @@ class GnomeTweakTool(Gtk.Application):
                 self.win.set_position(Gtk.WindowPosition.CENTER)
                 self.win.set_application(self)
                 self.win.set_size_request(720, 580)
-                toolbar = self.builder.get_object('toolbar')
-		toolbar.get_style_context().add_class(Gtk.STYLE_CLASS_PRIMARY_TOOLBAR)
         
 		model = TweakModel()
 		view = TweakView(
 			self.builder,
 			model)
-		self.builder.get_object('overview_sw').add(view.treeview)
 		
 		self.win.show_all()
 		view.run()

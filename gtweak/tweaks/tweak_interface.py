@@ -98,8 +98,8 @@ class KeyThemeSwitcher(GSettingsComboTweak):
         return valid
 
 TWEAKS = (
-    GSettingsSwitchTweak("org.gnome.desktop.interface", "menus-have-icons", group_name=TWEAK_GROUP_THEME),
-    GSettingsSwitchTweak("org.gnome.desktop.interface", "buttons-have-icons", group_name=TWEAK_GROUP_THEME),
+    #GSettingsSwitchTweak("org.gnome.desktop.interface", "menus-have-icons", group_name=TWEAK_GROUP_THEME),
+    #GSettingsSwitchTweak("org.gnome.desktop.interface", "buttons-have-icons", group_name=TWEAK_GROUP_THEME),
     DarkThemeSwitcher(group_name=TWEAK_GROUP_THEME),
     CursorThemeSwitcher(group_name=TWEAK_GROUP_THEME),
     KeyThemeSwitcher(group_name=TWEAK_GROUP_THEME),
