@@ -27,7 +27,7 @@ from gtweak.utils import AutostartManager
 
 class _AppChooser(Gtk.Dialog):
     def __init__(self, main_window, running):
-        Gtk.Dialog.__init__(self)
+        Gtk.Dialog.__init__(self, title="Tweak Tool")
 
         self._running = running
         self._all = {}
@@ -48,10 +48,26 @@ class _AppChooser(Gtk.Dialog):
         sw.props.hscrollbar_policy = Gtk.PolicyType.NEVER
         sw.add(lb)
 
-        self.get_content_area().pack_start(sw, True, True, 0)
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        
+        top = Gtk.HeaderBar()
+        top.set_title("Add Startup Application")
+        buttonCancel = Gtk.Button("Cancel")
+        buttonCancel.connect("clicked", self._on_cancel)
+        top.pack_start(buttonCancel)
+        
+        allButton = Gtk.Button("Add All Running Applications")
+        align = Gtk.Alignment(xalign=0.5, xscale=0.0)
+        align.add(allButton)
+
+        main_box.pack_start(top,False, False, 0)
+        main_box.pack_start(sw, True, True, 0)
+        main_box.pack_start(align,False, False, 5)
+
+        self.get_content_area().pack_start(main_box, True, True, 0)
         self.set_modal(True)
         self.set_transient_for(main_window)
-        self.set_size_request(400,300)
+        self.set_size_request(400,500)
 
     def _build_widget(self, a, extra):
         row = Gtk.ListBoxRow()
@@ -72,6 +88,9 @@ class _AppChooser(Gtk.Dialog):
         row.add(g)
         #row.get_style_context().add_class('tweak-white')
         return row
+
+    def _on_cancel(self, btn):
+        self.destroy()
 
 class _StartupTweak(Gtk.ListBoxRow, Tweak):
     def __init__(self, df, **options):
