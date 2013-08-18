@@ -44,9 +44,7 @@ class Window(Gtk.ApplicationWindow):
 
     def __init__(self, app, model):
         Gtk.ApplicationWindow.__init__(self,
-                              title="Tweak Tool",
-                              application=app,
-                              hide_titlebar_when_maximized=True)
+                                       application=app)
         
         self.set_size_request(800, 600)
         self.set_position(Gtk.WindowPosition.CENTER)
@@ -56,6 +54,9 @@ class Window(Gtk.ApplicationWindow):
         right_box = self.main_content()
         separator = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
         
+        titlebar = self.titlebar()
+        self.set_titlebar(titlebar)
+
         main_box.pack_start(left_box, False, False, 0)
         main_box.pack_start(separator, False, False, 0)
         main_box.pack_start(right_box, True, True, 0)
@@ -67,19 +68,36 @@ class Window(Gtk.ApplicationWindow):
 
         self.connect("key-press-event", self._on_key_press)
         self.add(main_box)
+    
+    def titlebar(self):
+        hbar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+
+        self.right_header = Gtk.HeaderBar()
+        self.right_header.props.show_close_button = True
+        separator = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
         
-    def sidebar(self):
-        left_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-       
         left_header = Gtk.HeaderBar()
-        left_header.set_title("Tweaks")
-        
+        left_header.props.spacing = 36
+
         icon = Gtk.Image()
         icon.set_from_icon_name("edit-find-symbolic", Gtk.IconSize.BUTTON)
         self.button = Gtk.ToggleButton()
         self.button.add(icon)
         self.button.connect("toggled", self._on_find_toggled)
-         
+        left_header.pack_start(self.button)
+        lbl = Gtk.Label("Tweaks")
+        left_header.pack_start(lbl)
+
+        hbar.pack_start(left_header, False, False, 0)
+        hbar.pack_start(separator, False, False, 0)
+        hbar.pack_start(self.right_header, True, True, 0)
+        
+        return hbar
+        
+        
+    def sidebar(self):
+        left_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+       
         self.revealer = Gtk.Revealer()
         self.entry = Gtk.SearchEntry(placeholder_text="Search Tweaks...")
         self.entry.props.margin_left = 5
@@ -99,8 +117,6 @@ class Window(Gtk.ApplicationWindow):
                           Gtk.PolicyType.AUTOMATIC)
         scroll.add(self.listbox)
         
-        left_header.pack_start(self.button)
-        left_box.pack_start(left_header, False, False, 0)
         left_box.pack_start(self.revealer, False, False, 0)
         left_box.pack_start(scroll, True, True, 0)
         
@@ -109,12 +125,10 @@ class Window(Gtk.ApplicationWindow):
     def main_content(self):        
         right_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         
-        self.right_header = Gtk.HeaderBar()
         #GRR why can I not put margin in the CSS of a GtkStack
         self.stack = Gtk.Stack()
         self.stack.get_style_context().add_class("main-container")
         self.stack.props.margin = 20
-        right_box.pack_start(self.right_header, False, False, 0)
         right_box.pack_start(self.stack, True, True, 0)
         
         return right_box
