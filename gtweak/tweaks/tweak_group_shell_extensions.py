@@ -31,7 +31,8 @@ class _ShellExtensionTweak(Gtk.ListBoxRow, Tweak):
         self._shell = shell
         state = ext.get("state")
         uuid = ext["uuid"]
-
+        self.get_style_context().add_class("tweak-extension-list")
+        
         sw = Gtk.Switch()
         sw.props.vexpand = False
         sw.props.valign = Gtk.Align.CENTER
@@ -290,7 +291,13 @@ class ShellExtensionTweakGroup(ListBoxTweakGroup):
                 logging.warning("Error listing extensions", exc_info=True)
         except:
             logging.warning("Error detecting shell", exc_info=True)
-        
+
+
+        if extension_tweaks:
+            index =  extension_tweaks[0]
+            index.get_style_context().remove_class("tweak-extension-list")
+            index.get_style_context().add_class("tweak-extension-head")
+
         #add the extension installer
         extension_tweaks.append(
                 _ShellExtensionInstallerTweak(shell, size_group=sg))
