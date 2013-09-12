@@ -139,15 +139,27 @@ class Window(Gtk.ApplicationWindow):
         groups = self._model._tweak_group_names.keys()
         groups = sorted(groups)
 
-        for g in groups:
+        for g in filter(lambda x: not "Footer" in x, groups): 
             row = _make_items_listbox(g)
             self.listbox.add(row)
+            
+            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
             tweakgroup = self._model.get_value(
                                 self._model.get_tweakgroup_iter(g), 
                                 self._model.COLUMN_TWEAK)
+            
+            footer = g+" Footer"
+            if footer in groups:
+                tweakgroupfooter = self._model.get_value(
+                                          self._model.get_tweakgroup_iter(footer),
+                                          self._model.COLUMN_TWEAK)
+                box.pack_end(tweakgroupfooter, False, False, 0)
+
             scroll = Gtk.ScrolledWindow()
             scroll.add(tweakgroup)
-            self.stack.add_named(scroll, g)
+
+            box.pack_start(scroll, True, True, 0)
+            self.stack.add_named(box, g)
 
         widget = self.listbox.get_row_at_index(0)
         self.listbox.select_row (widget)

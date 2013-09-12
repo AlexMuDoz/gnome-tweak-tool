@@ -22,8 +22,8 @@ import logging
 
 from gi.repository import Gtk, GLib, Gio
 
-from gtweak.tweakmodel import Tweak
-from gtweak.widgets import ListBoxTweakGroup, UI_BOX_SPACING
+from gtweak.tweakmodel import Tweak, TWEAK_GROUP_APPLICATION
+from gtweak.widgets import ListBoxTweakGroup, UI_BOX_SPACING, Footer
 from gtweak.utils import AutostartManager, AutostartFile
 
 def _list_header_func(row, before, user_data):
@@ -151,7 +151,7 @@ class AutostartListBoxTweakGroup(ListBoxTweakGroup):
             tweaks.append( sdf )
 
         ListBoxTweakGroup.__init__(self,
-            _("Startup Applications"),
+            TWEAK_GROUP_APPLICATION,
             *tweaks,
             css_class='tweak-group-white')
         self.set_header_func(_list_header_func, None)
@@ -202,4 +202,7 @@ class AutostartListBoxTweakGroup(ListBoxTweakGroup):
 
 TWEAK_GROUPS = [
     AutostartListBoxTweakGroup(),
+    ListBoxTweakGroup(TWEAK_GROUP_APPLICATION+" Footer",
+        Footer("These applications are automatically started for you", ""),
+   ),
 ]
