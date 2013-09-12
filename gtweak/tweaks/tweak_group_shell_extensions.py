@@ -11,7 +11,7 @@ from gi.repository import Pango
 from operator import itemgetter
 from gtweak.utils import extract_zip_file, execute_subprocess
 from gtweak.gshellwrapper import GnomeShell, GnomeShellFactory
-from gtweak.tweakmodel import Tweak
+from gtweak.tweakmodel import Tweak, TWEAK_GROUP_EXTENSION
 from gtweak.widgets import FileChooserButton, build_label_beside_widget, build_horizontal_sizegroup, build_tight_button, UI_BOX_SPACING, ListBoxTweakGroup
 from gtweak.egowrapper import ExtensionsDotGnomeDotOrg
 from gtweak.utils import DisableExtension
@@ -296,7 +296,7 @@ class ShellExtensionTweakGroup(ListBoxTweakGroup):
                 _ShellExtensionInstallerTweak(shell, size_group=sg))
             
         ListBoxTweakGroup.__init__(self,
-                                   _("Extensions"),
+                                   TWEAK_GROUP_EXTENSION,
                                    *extension_tweaks)
         
         self.set_header_func(self._list_header_func, None)

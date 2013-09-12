@@ -20,6 +20,7 @@ import os.path
 from gi.repository import GLib
 
 import gtweak
+from gtweak.tweakmodel import TWEAK_GROUP_KEYMOUSE
 from gtweak.utils import XSettingsOverrides, walk_directories, make_combo_list_with_default
 from gtweak.widgets import ListBoxTweakGroup, GSettingsComboTweak, GSettingsSwitchTweak, GetterSetterSwitchTweak, Title
 
@@ -56,7 +57,7 @@ class KeyThemeSwitcher(GSettingsComboTweak):
         return valid
 
 TWEAK_GROUPS = [
-    ListBoxTweakGroup(_("Keyboard and Mouse"),
+    ListBoxTweakGroup(TWEAK_GROUP_KEYMOUSE,
         KeyThemeSwitcher(),
         GSettingsSwitchTweak(_("Show All Input Sources"),
                               "org.gnome.desktop.input-sources",

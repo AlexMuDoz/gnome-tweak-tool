@@ -26,8 +26,10 @@ from gi.repository import Gtk
 def N_(x): return x
 
 TWEAK_GROUP_APPEARANCE = _("Appearance")
+TWEAK_GROUP_DESKTOP = _("Desktop")
 TWEAK_GROUP_EXTENSION = _("Extensions")
 TWEAK_GROUP_FONTS = _("Fonts")
+TWEAK_GROUP_KEYMOUSE = _("Keyboard and Mouse")
 TWEAK_GROUP_POWER = _("Power")
 TWEAK_GROUP_APPLICATION = _("Startup Applications")
 TWEAK_GROUP_TOPBAR = _("Top Bar")

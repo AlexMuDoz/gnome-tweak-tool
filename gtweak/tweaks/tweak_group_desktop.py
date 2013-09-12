@@ -16,13 +16,13 @@
 # along with gnome-tweak-tool.  If not, see <http://www.gnu.org/licenses/>.
 
 from gi.repository import Gtk
-
+from gtweak.tweakmodel import TWEAK_GROUP_DESKTOP
 from gtweak.widgets import ListBoxTweakGroup, GSettingsSwitchTweak, GSettingsComboEnumTweak, GSettingsFileChooserButtonTweak, GSettingsCheckTweak, Title
 
 dicons = GSettingsSwitchTweak(_("Icons on Desktop"),"org.gnome.desktop.background","show-desktop-icons")
 
 TWEAK_GROUPS = [
-    ListBoxTweakGroup(_("Desktop"),
+    ListBoxTweakGroup(TWEAK_GROUP_DESKTOP,
         dicons,
         GSettingsCheckTweak(_("Computer"),"org.gnome.nautilus.desktop", "computer-icon-visible", depends_on=dicons, schema_filename="org.gnome.nautilus.gschema.xml"),
         GSettingsCheckTweak(_("Home"),"org.gnome.nautilus.desktop", "home-icon-visible", depends_on=dicons, schema_filename="org.gnome.nautilus.gschema.xml"),
