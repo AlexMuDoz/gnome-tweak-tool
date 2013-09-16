@@ -305,7 +305,7 @@ class ShellExtensionTweakGroup(ListBoxTweakGroup):
         ListBoxTweakGroup.__init__(self,
                                    _("Extensions"),
                                    *extension_tweaks)
-        
+        self.props.margin = 5
         self.set_header_func(self._list_header_func, None)
 
     def _got_info(self, ego, resp, uuid, extension, widget):

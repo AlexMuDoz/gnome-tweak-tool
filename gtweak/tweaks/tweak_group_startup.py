@@ -172,6 +172,8 @@ class AutostartListBoxTweakGroup(ListBoxTweakGroup):
             _("Startup Applications"),
             *tweaks)
 
+        self.props.margin = 5
+
     def _on_remove_clicked(self, btn, widget, df):
         self.remove(widget)
         AutostartFile(df).update_start_at_login(False)
