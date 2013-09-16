@@ -26,10 +26,6 @@ from gtweak.tweakmodel import Tweak
 from gtweak.widgets import ListBoxTweakGroup, UI_BOX_SPACING
 from gtweak.utils import AutostartManager, AutostartFile
 
-def _list_header_func(row, before, user_data):
-    if before and not row.get_header():
-        row.set_header (Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL))
-
 class _AppChooser(Gtk.Dialog):
     def __init__(self, main_window, running_exes):
         Gtk.Dialog.__init__(self, title=_("Applications"))
@@ -40,7 +36,6 @@ class _AppChooser(Gtk.Dialog):
         lb = Gtk.ListBox()
         lb.props.margin = 5
         lb.set_sort_func(self._sort_apps, None)
-        lb.set_header_func(_list_header_func, None)
 
         apps = Gio.app_info_get_all()
         for a in apps:
@@ -128,8 +123,7 @@ class _StartupTweak(Gtk.ListBoxRow, Tweak):
 
         self.add(grid)
 
-        self.props.margin = 5
-        self.get_style_context().add_class('tweak-white')
+        self.get_style_context().add_class('tweak-startup-list')
 
         self.btn = btn
 
@@ -165,15 +159,18 @@ class AutostartListBoxTweakGroup(ListBoxTweakGroup):
             sdf.btn.connect("clicked", self._on_remove_clicked, sdf, df)
             tweaks.append( sdf )
 
+        if tweaks:
+            index =  tweaks[0]
+            index.get_style_context().remove_class("tweak-startup-list")
+            index.get_style_context().add_class("tweak-startup-head")
+
         add = AddStartupTweak()
         add.btn.connect("clicked", self._on_add_clicked)
         tweaks.append(add)
 
         ListBoxTweakGroup.__init__(self,
             _("Startup Applications"),
-            *tweaks,
-            css_class='tweak-group-white')
-        self.set_header_func(_list_header_func, None)
+            *tweaks)
 
     def _on_remove_clicked(self, btn, widget, df):
         self.remove(widget)
@@ -190,7 +187,14 @@ class AutostartListBoxTweakGroup(ListBoxTweakGroup):
             if df:
                 AutostartFile(df).update_start_at_login(True)
                 sdf = _StartupTweak(df)
+                sdf.get_style_context().remove_class("tweak-startup-list")
+                sdf.get_style_context().add_class("tweak-startup-head")
                 sdf.btn.connect("clicked", self._on_remove_clicked, sdf, df)
+
+                index = self.get_row_at_y(0)
+                index.get_style_context().remove_class("tweak-startup-head")
+                index.get_style_context().add_class("tweak-startup-list")
+
                 self.add_tweak_row(sdf, 0).show_all()
         a.destroy()
 
