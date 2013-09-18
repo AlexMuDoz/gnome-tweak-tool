@@ -219,6 +219,8 @@ class ListBoxTweakGroup(Gtk.ListBox, TweakGroup):
         self._sg = Gtk.SizeGroup(mode=Gtk.SizeGroupMode.HORIZONTAL)
         self._sg.props.ignore_hidden = True
 
+        self.footer = None
+
         TweakGroup.__init__(self, name, **options)
 
         for t in tweaks:
@@ -229,7 +231,10 @@ class ListBoxTweakGroup(Gtk.ListBox, TweakGroup):
 
     def add_tweak_row(self, t, position=None):
         if self.add_tweak(t):
-            if isinstance(t, Gtk.ListBoxRow):
+            if isinstance(t, Footer):
+                self.footer = t
+                return
+            elif isinstance(t, Gtk.ListBoxRow):
                 row = t
             else:
                 row = Gtk.ListBoxRow(name=t.uid)
@@ -534,3 +539,18 @@ class GSettingsSwitchTweakValue(Gtk.Box, _GSettingsTweak):
     
     def get_active(self):
         raise NotImplementedError()
+
+class Footer(Gtk.Alignment, Tweak):
+    def __init__(self, name, desc=None,**options):
+        Gtk.Alignment.__init__(self, xscale = 0.0, xalign = 0.0)
+        Tweak.__init__(self, name, desc, **options)
+
+        align = options.get("align","")
+        if align == "center":
+            self.props.xalign=0.5
+        elif align == "right":
+            self.props.xalign=1.0
+
+        widget = Gtk.Label(label=name, use_markup=True)
+        widget.get_style_context().add_class("dim-label")
+        self.add(widget)

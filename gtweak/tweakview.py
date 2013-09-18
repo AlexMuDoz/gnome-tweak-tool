@@ -162,9 +162,15 @@ class Window(Gtk.ApplicationWindow):
             tweakgroup = self._model.get_value(
                                 self._model.get_tweakgroup_iter(g), 
                                 self._model.COLUMN_TWEAK)
+            
+            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+            if tweakgroup.footer:
+                box.pack_end(tweakgroup.footer, False, False, 0) 
+
             scroll = Gtk.ScrolledWindow()
             scroll.add(tweakgroup)
-            self.stack.add_named(scroll, g)
+            box.pack_start(scroll, True, True, 0) 
+            self.stack.add_named(box, g)
 
         widget = self.listbox.get_row_at_index(0)
         self.listbox.select_row (widget)
