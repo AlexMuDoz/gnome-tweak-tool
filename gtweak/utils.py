@@ -305,7 +305,7 @@ class LogoutNotification:
             self.notification.add_action(
                                 "restart",
                                 "Restart Session",
-                                self._logout, None, None)
+                                self._logout, None)
             self.notification.set_hint(
                                 "desktop-entry",
                                 GLib.Variant('s', 'gnome-tweak-tool'))
